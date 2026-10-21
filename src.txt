@@ -1,0 +1,531 @@
+===== src/App.vue =====
+<script setup>
+import { ShoppingBag, Flame, Search } from 'lucide-vue-next'
+import { useCatalog } from './composables/useCatalog'
+import ProductCard from './components/ProductCard.vue'
+import CartDrawer from './components/CartDrawer.vue'
+
+const { 
+  categories, 
+  selectedCategory, 
+  searchQuery, 
+  filteredProducts, 
+  isLoading, 
+  setCategory 
+} = useCatalog()
+</script>
+
+<template>
+  <div class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24">
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-10 bg-emerald-600 text-white shadow-md p-4">
+      <div class="max-w-md mx-auto flex justify-between items-center">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Warung Sinar Pagi</h1>
+          <p class="text-xs text-emerald-100">Katalog Digital & Pesan via WA</p>
+        </div>
+        <div class="relative bg-emerald-700 p-2 rounded-full">
+          <ShoppingBag :size="20" class="text-white" />
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 space-y-5">
+      <!-- Banner Promo -->
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-3 shadow-xs">
+        <Flame class="text-amber-500 shrink-0 mt-0.5" :size="20" />
+        <div class="text-sm text-amber-900">
+          <p class="font-semibold">Siap Antar Area Kost!</p>
+          <p class="text-xs text-amber-700 mt-0.5">Pesan Pop Mie seduh, es kopi, atau cemilan langsung kirim ke WhatsApp.</p>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative">
+        <Search class="absolute left-3 top-2.5 text-slate-400" :size="18" />
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Cari produk di warung..." 
+          class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+      </div>
+
+      <!-- Kategori Filter -->
+      <section>
+        <h2 class="text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">Kategori</h2>
+        <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button 
+            @click="setCategory('SEMUA')"
+            :class="[
+              'text-xs font-medium px-4 py-2 rounded-full shrink-0 transition',
+              selectedCategory === 'SEMUA' 
+                ? 'bg-emerald-600 text-white shadow-xs' 
+                : 'bg-white border border-slate-200 text-slate-700'
+            ]"
+          >
+            Semua
+          </button>
+
+          <button 
+            v-for="cat in categories" 
+            :key="cat.id"
+            @click="setCategory(cat.name)"
+            :class="[
+              'text-xs font-medium px-4 py-2 rounded-full shrink-0 transition',
+              selectedCategory === cat.name 
+                ? 'bg-emerald-600 text-white shadow-xs' 
+                : 'bg-white border border-slate-200 text-slate-700'
+            ]"
+          >
+            {{ cat.name }}
+          </button>
+        </div>
+      </section>
+
+      <!-- Grid Produk -->
+      <section>
+        <div v-if="isLoading" class="text-center py-10 text-slate-400 text-sm">
+          Memuat produk...
+        </div>
+
+        <div v-else-if="filteredProducts.length === 0" class="text-center py-10 text-slate-400 text-sm">
+          Produk tidak ditemukan.
+        </div>
+
+        <div v-else class="grid grid-cols-2 gap-3">
+          <ProductCard 
+            v-for="product in filteredProducts" 
+            :key="product.id" 
+            :product="product" 
+          />
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Cart & Drawer -->
+    <CartDrawer />
+  </div>
+</template>
+
+===== src/components/ProductCard.vue =====
+<script setup>
+import { useCartStore } from '../stores/cartStore'
+
+const props = defineProps({
+  product: {
+    type: Object,
+    required: true
+  }
+})
+
+const cartStore = useCartStore()
+</script>
+
+<template>
+  <div class="border rounded-xl p-3 bg-white shadow-sm flex flex-col justify-between">
+    <div>
+      <div class="w-full h-32 bg-gray-100 rounded-lg overflow-hidden mb-2">
+        <img 
+          :src="product.imageUrl" 
+          :alt="product.name" 
+          class="w-full h-full object-cover"
+          @error="(e) => e.target.src = 'https://placehold.co/300x300?text=Sinar+Pagi'"
+        />
+      </div>
+      <span class="text-xs text-emerald-600 font-semibold uppercase">{{ product.category }}</span>
+      <h3 class="font-bold text-sm text-gray-800 line-clamp-2 leading-tight">{{ product.name }}</h3>
+    </div>
+
+    <div class="mt-3 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-gray-400">Rp {{ product.price.toLocaleString('id-ID') }} / {{ product.unit }}</p>
+        <p class="text-xs font-semibold text-gray-500">Stok: {{ product.stock }}</p>
+      </div>
+      <button 
+        @click="cartStore.addItem(product)"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+      >
+        + Beli
+      </button>
+    </div>
+  </div>
+</template>
+
+===== src/components/CartDrawer.vue =====
+<script setup>
+import { ref } from 'vue'
+import { useCartStore } from '../stores/cartStore'
+
+const cartStore = useCartStore()
+const isOpen = ref(false)
+const customerInfo = ref({ name: '', room: '' })
+
+const STORE_PHONE = '628123456789' // Ganti nomor WA Warung Sinar Pagi
+
+function handleCheckout() {
+  if (!customerInfo.value.name) {
+    alert('Isi nama pemesan dulu ya!')
+    return
+  }
+  cartStore.checkoutViaWhatsApp(STORE_PHONE, customerInfo.value)
+}
+</script>
+
+<template>
+  <!-- Floating Cart Button -->
+  <button 
+    @click="isOpen = true"
+    class="fixed bottom-4 right-4 bg-emerald-600 text-white px-4 py-3 rounded-full shadow-lg font-bold flex items-center gap-2 z-40"
+  >
+    🛒 <span>{{ cartStore.totalItems }} Item</span>
+  </button>
+
+  <!-- Overlay & Drawer -->
+  <div v-if="isOpen" class="fixed inset-0 bg-black/50 z-50 flex justify-end">
+    <div class="bg-white w-full max-w-md h-full p-4 flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="font-bold text-lg">Keranjang Belanja</h2>
+          <button @click="isOpen = false" class="text-gray-500 text-xl font-bold">&times;</button>
+        </div>
+
+        <!-- List Item -->
+        <div v-if="cartStore.items.length === 0" class="text-center py-10 text-gray-400">
+          Keranjang masih kosong nih.
+        </div>
+
+        <div v-else class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+          <div 
+            v-for="item in cartStore.items" 
+            :key="item.id" 
+            class="flex items-center justify-between border-b pb-2"
+          >
+            <div>
+              <p class="font-semibold text-sm">{{ item.name }}</p>
+              <p class="text-xs text-gray-500">Rp {{ item.price.toLocaleString('id-ID') }} x {{ item.quantity }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="cartStore.updateQuantity(item.id, item.quantity - 1)" class="px-2 bg-gray-200 rounded">-</button>
+              <span class="text-sm font-bold">{{ item.quantity }}</span>
+              <button @click="cartStore.updateQuantity(item.id, item.quantity + 1)" class="px-2 bg-gray-200 rounded">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checkout Form -->
+      <div v-if="cartStore.items.length > 0" class="border-t pt-4 space-y-3">
+        <div class="flex justify-between font-bold text-base">
+          <span>Total:</span>
+          <span>Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span>
+        </div>
+        <input 
+          v-model="customerInfo.name" 
+          type="text" 
+          placeholder="Nama Pemesan (contoh: Mas Budi)" 
+          class="w-full border p-2 rounded text-sm"
+        />
+        <input 
+          v-model="customerInfo.room" 
+          type="text" 
+          placeholder="No. Kamar / Rumah (opsional)" 
+          class="w-full border p-2 rounded text-sm"
+        />
+        <button 
+          @click="handleCheckout"
+          class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2"
+        >
+          Kirim Pesanan ke WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+===== src/main.js =====
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import './style.css'
+import App from './App.vue'
+
+const app = createApp(App)
+app.use(createPinia())
+app.mount('#app')
+
+===== src/style.css =====
+@import "tailwindcss";
+===== src/db/index.js =====
+import Dexie from 'dexie'
+
+export const db = new Dexie('SinarPagiCatalogDB')
+
+db.version(1).stores({
+  products: 'id, name, category, price_sell, qty',
+  categories: 'id, name'
+})
+
+===== src/services/productService.js =====
+import { db } from '../db/index'
+
+export const productService = {
+  // Mapping dari format POS ke format Katalog App
+  transformPOSProduct(rawProduct) {
+    return {
+      id: rawProduct.id,
+      name: rawProduct.name,
+      category: rawProduct.category || 'UMUM',
+      price: rawProduct.price_sell || 0,
+      unit: rawProduct.unit || 'PCS',
+      stock: rawProduct.qty || 0,
+      isAvailable: (rawProduct.qty > 0) && (rawProduct.price_sell > 0),
+      // Contoh generator URL Cloudinary berbasis nama/ID produk
+      imageUrl: rawProduct.imageUrl || `https://res.cloudinary.com/warung-sinar-pagi/image/upload/v1/products/${rawProduct.id}.jpg`
+    }
+  },
+
+  // Seed data awal dari JSON POS ke IndexedDB
+  async initProductsFromJSON(rawJSONData) {
+    const productsCount = await db.products.count()
+    if (productsCount === 0 && rawJSONData?.products) {
+      const transformedProducts = rawJSONData.products.map(this.transformPOSProduct)
+      await db.products.bulkAdd(transformedProducts)
+      
+      if (rawJSONData?.categories) {
+        await db.categories.bulkAdd(rawJSONData.categories)
+      }
+    }
+  },
+
+  async getAllProducts() {
+    return await db.products.toArray()
+  },
+
+  async getCategories() {
+    return await db.categories.toArray()
+  }
+}
+
+===== src/services/whatsappService.js =====
+export const whatsappService = {
+  formatOrderMessage(cartItems, customerInfo = {}) {
+    const { name = 'Anak Kost', room = '-' } = customerInfo
+    
+    let text = `*PESANAN BARU - WARUNG SINAR PAGI*\n`
+    text += `-----------------------------------\n`
+    text += `*Pemesan:* ${name}\n`
+    text += `*No. Kost/Kamar:* ${room}\n\n`
+    text += `*Rincian Belanjaan:*\n`
+
+    let total = 0
+    cartItems.forEach((item, index) => {
+      const subtotal = item.price * item.quantity
+      total += subtotal
+      text += `${index + 1}. ${item.name} (${item.quantity} ${item.unit}) = Rp ${subtotal.toLocaleString('id-ID')}\n`
+      if (item.selectedVariant) {
+        text += `   _Catatan: ${item.selectedVariant}_\n`
+      }
+    })
+
+    text += `\n-----------------------------------\n`
+    text += `*TOTAL BAYAR:* Rp ${total.toLocaleString('id-ID')}\n\n`
+    text += `Mohon konfirmasi pesanan dan info nomor QRIS / COD ya A/Teteh. Terima kasih!`
+
+    return encodeURIComponent(text)
+  },
+
+  generateWhatsAppURL(phoneNumber, formattedMessage) {
+    const cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
+    return `https://wa.me/${cleanPhone}?text=${formattedMessage}`
+  }
+}
+
+===== src/stores/catalogStore.js =====
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { productService } from '../services/productService'
+
+export const useCatalogStore = defineStore('catalog', () => {
+  const products = ref([])
+  const categories = ref([])
+  const selectedCategory = ref('SEMUA')
+  const searchQuery = ref('')
+  const isLoading = ref(false)
+
+  // Fetch data dari Dexie.js / IndexedDB
+  async function fetchCatalog() {
+    isLoading.value = true
+    try {
+      products.value = await productService.getAllProducts()
+      categories.value = await productService.getCategories()
+    } catch (error) {
+      console.error('Gagal mengambil data katalog:', error)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Filter gabungan berdasarkan pencarian teks dan kategori
+  const filteredProducts = computed(() => {
+    return products.value.filter(product => {
+      const matchCategory = selectedCategory.value === 'SEMUA' || product.category === selectedCategory.value
+      const matchSearch = product.name.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
+      return matchCategory && matchSearch && product.isAvailable
+    })
+  })
+
+  function setCategory(categoryName) {
+    selectedCategory.value = categoryName
+  }
+
+  function setSearchQuery(query) {
+    searchQuery.value = query
+  }
+
+  return {
+    products,
+    categories,
+    selectedCategory,
+    searchQuery,
+    isLoading,
+    filteredProducts,
+    fetchCatalog,
+    setCategory,
+    setSearchQuery
+  }
+})
+
+===== src/stores/cartStore.js =====
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { whatsappService } from '../services/whatsappService'
+
+export const useCartStore = defineStore('cart', () => {
+  const items = ref([])
+
+  const totalItems = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
+  const totalPrice = computed(() => items.value.reduce((sum, item) => sum + (item.price * item.quantity), 0))
+
+  function addItem(product, variant = null) {
+    const existing = items.value.find(i => i.id === product.id && i.selectedVariant === variant)
+    if (existing) {
+      existing.quantity++
+    } else {
+      items.value.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        unit: product.unit,
+        selectedVariant: variant,
+        quantity: 1
+      })
+    }
+  }
+
+  function removeItem(productId) {
+    items.value = items.value.filter(i => i.id !== productId)
+  }
+
+  function updateQuantity(productId, qty) {
+    const item = items.value.find(i => i.id === productId)
+    if (item) {
+      item.quantity = qty
+      if (item.quantity <= 0) removeItem(productId)
+    }
+  }
+
+  function checkoutViaWhatsApp(storePhone, customerInfo) {
+    const message = whatsappService.formatOrderMessage(items.value, customerInfo)
+    const url = whatsappService.generateWhatsAppURL(storePhone, message)
+    window.open(url, '_blank')
+  }
+
+  return { items, totalItems, totalPrice, addItem, removeItem, updateQuantity, checkoutViaWhatsApp }
+})
+
+===== src/composables/useCatalog.js =====
+import { onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useCatalogStore } from '../stores/catalogStore'
+import { productService } from '../services/productService'
+import initialPOSData from '../mock/sinar-pagi.json'
+
+export function useCatalog() {
+  const catalogStore = useCatalogStore()
+
+  // Ambil state reaktif menggunakan storeToRefs agar reaktivitas Vue tetap terjaga
+  const { 
+    products, 
+    categories, 
+    selectedCategory, 
+    searchQuery, 
+    filteredProducts, 
+    isLoading 
+  } = storeToRefs(catalogStore)
+
+  // Ambil method/action dari store
+  const { setCategory, setSearchQuery, fetchCatalog } = catalogStore
+
+  onMounted(async () => {
+    try {
+      // 1. Seed data ke Dexie.js dari file mock sinar-pagi.json jika database lokal masih kosong
+      await productService.initProductsFromJSON(initialPOSData)
+
+      // 2. Load data dari Dexie.js ke dalam Pinia Store
+      await fetchCatalog()
+    } catch (err) {
+      console.error('Gagal memuat katalog:', err)
+    }
+  })
+
+  return {
+    // State Reaktif
+    products,
+    categories,
+    selectedCategory,
+    searchQuery,
+    filteredProducts,
+    isLoading,
+
+    // Actions
+    setCategory,
+    setSearchQuery,
+    fetchCatalog
+  }
+}
+
+===== src/mock/sinar-pagi.json =====
+{
+  "categories": [
+    { "id": "MINUMAN SACHET", "name": "MINUMAN SACHET" },
+    { "id": "MIE INSTAN", "name": "MIE INSTAN" },
+    { "id": "SEMBAKO", "name": "SEMBAKO" }
+  ],
+  "products": [
+    {
+      "id": "SP-mryur6g9-ha55o",
+      "name": "GOODDAY CAPUCINO 25G",
+      "category": "MINUMAN SACHET",
+      "price_sell": 2500,
+      "unit": "PCS",
+      "qty": 10
+    },
+    {
+      "id": "SP-mryur6g9-ha55p",
+      "name": "INDOMIE GORENG SPESIAL",
+      "category": "MIE INSTAN",
+      "price_sell": 3100,
+      "unit": "PCS",
+      "qty": 40
+    },
+    {
+      "id": "SP-mryur6g9-ha55q",
+      "name": "MINYAK GORENG KITA 1L",
+      "category": "SEMBAKO",
+      "price_sell": 16000,
+      "unit": "PCS",
+      "qty": 5
+    }
+  ]
+}
+

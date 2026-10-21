@@ -1,0 +1,33 @@
+{
+  "categories": [
+    { "id": "MINUMAN SACHET", "name": "MINUMAN SACHET" },
+    { "id": "MIE INSTAN", "name": "MIE INSTAN" },
+    { "id": "SEMBAKO", "name": "SEMBAKO" }
+  ],
+  "products": [
+    {
+      "id": "SP-mryur6g9-ha55o",
+      "name": "GOODDAY CAPUCINO 25G",
+      "category": "MINUMAN SACHET",
+      "price_sell": 2500,
+      "unit": "PCS",
+      "qty": 10
+    },
+    {
+      "id": "SP-mryur6g9-ha55p",
+      "name": "INDOMIE GORENG SPESIAL",
+      "category": "MIE INSTAN",
+      "price_sell": 3100,
+      "unit": "PCS",
+      "qty": 40
+    },
+    {
+      "id": "SP-mryur6g9-ha55q",
+      "name": "MINYAK GORENG KITA 1L",
+      "category": "SEMBAKO",
+      "price_sell": 16000,
+      "unit": "PCS",
+      "qty": 5
+    }
+  ]
+}
