@@ -9,45 +9,29 @@ export const useCatalogStore = defineStore('catalog', () => {
   const searchQuery = ref('')
   const isLoading = ref(false)
 
-  // Fetch data dari Dexie.js / IndexedDB
   async function fetchCatalog() {
     isLoading.value = true
     try {
       products.value = await productService.getAllProducts()
       categories.value = await productService.getCategories()
-    } catch (error) {
-      console.error('Gagal mengambil data katalog:', error)
+      categories.value.sort((a,b) => (b.count||0) - (a.count||0))
+    } catch (e) {
+      console.error(e)
     } finally {
       isLoading.value = false
     }
   }
 
-  // Filter gabungan berdasarkan pencarian teks dan kategori
   const filteredProducts = computed(() => {
-    return products.value.filter(product => {
-      const matchCategory = selectedCategory.value === 'SEMUA' || product.category === selectedCategory.value
-      const matchSearch = product.name.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
-      return matchCategory && matchSearch && product.isAvailable
+    return products.value.filter(p => {
+      const matchCat = selectedCategory.value === 'SEMUA' || p.category === selectedCategory.value
+      const matchSearch = p.name.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
+      return matchCat && matchSearch && p.isAvailable
     })
   })
 
-  function setCategory(categoryName) {
-    selectedCategory.value = categoryName
-  }
+  function setCategory(name) { selectedCategory.value = name }
+  function setSearchQuery(q) { searchQuery.value = q }
 
-  function setSearchQuery(query) {
-    searchQuery.value = query
-  }
-
-  return {
-    products,
-    categories,
-    selectedCategory,
-    searchQuery,
-    isLoading,
-    filteredProducts,
-    fetchCatalog,
-    setCategory,
-    setSearchQuery
-  }
+  return { products, categories, selectedCategory, searchQuery, isLoading, filteredProducts, fetchCatalog, setCategory, setSearchQuery }
 })

@@ -1,155 +1,50 @@
-===== src/App.vue =====
+===== src/components/CategoryFilter.vue =====
 <script setup>
-import { ShoppingBag, Flame, Search } from 'lucide-vue-next'
-import { useCatalog } from './composables/useCatalog'
-import ProductCard from './components/ProductCard.vue'
-import CartDrawer from './components/CartDrawer.vue'
-
-const { 
-  categories, 
-  selectedCategory, 
-  searchQuery, 
-  filteredProducts, 
-  isLoading, 
-  setCategory 
-} = useCatalog()
-</script>
-
-<template>
-  <div class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24">
-    <!-- Header / Navbar -->
-    <header class="sticky top-0 z-10 bg-emerald-600 text-white shadow-md p-4">
-      <div class="max-w-md mx-auto flex justify-between items-center">
-        <div>
-          <h1 class="text-xl font-bold tracking-tight">Warung Sinar Pagi</h1>
-          <p class="text-xs text-emerald-100">Katalog Digital & Pesan via WA</p>
-        </div>
-        <div class="relative bg-emerald-700 p-2 rounded-full">
-          <ShoppingBag :size="20" class="text-white" />
-        </div>
-      </div>
-    </header>
-
-    <main class="max-w-md mx-auto p-4 space-y-5">
-      <!-- Banner Promo -->
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-3 shadow-xs">
-        <Flame class="text-amber-500 shrink-0 mt-0.5" :size="20" />
-        <div class="text-sm text-amber-900">
-          <p class="font-semibold">Siap Antar Area Kost!</p>
-          <p class="text-xs text-amber-700 mt-0.5">Pesan Pop Mie seduh, es kopi, atau cemilan langsung kirim ke WhatsApp.</p>
-        </div>
-      </div>
-
-      <!-- Search Input -->
-      <div class="relative">
-        <Search class="absolute left-3 top-2.5 text-slate-400" :size="18" />
-        <input 
-          v-model="searchQuery"
-          type="text" 
-          placeholder="Cari produk di warung..." 
-          class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        />
-      </div>
-
-      <!-- Kategori Filter -->
-      <section>
-        <h2 class="text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">Kategori</h2>
-        <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <button 
-            @click="setCategory('SEMUA')"
-            :class="[
-              'text-xs font-medium px-4 py-2 rounded-full shrink-0 transition',
-              selectedCategory === 'SEMUA' 
-                ? 'bg-emerald-600 text-white shadow-xs' 
-                : 'bg-white border border-slate-200 text-slate-700'
-            ]"
-          >
-            Semua
-          </button>
-
-          <button 
-            v-for="cat in categories" 
-            :key="cat.id"
-            @click="setCategory(cat.name)"
-            :class="[
-              'text-xs font-medium px-4 py-2 rounded-full shrink-0 transition',
-              selectedCategory === cat.name 
-                ? 'bg-emerald-600 text-white shadow-xs' 
-                : 'bg-white border border-slate-200 text-slate-700'
-            ]"
-          >
-            {{ cat.name }}
-          </button>
-        </div>
-      </section>
-
-      <!-- Grid Produk -->
-      <section>
-        <div v-if="isLoading" class="text-center py-10 text-slate-400 text-sm">
-          Memuat produk...
-        </div>
-
-        <div v-else-if="filteredProducts.length === 0" class="text-center py-10 text-slate-400 text-sm">
-          Produk tidak ditemukan.
-        </div>
-
-        <div v-else class="grid grid-cols-2 gap-3">
-          <ProductCard 
-            v-for="product in filteredProducts" 
-            :key="product.id" 
-            :product="product" 
-          />
-        </div>
-      </section>
-    </main>
-
-    <!-- Floating Cart & Drawer -->
-    <CartDrawer />
-  </div>
-</template>
-
-===== src/components/ProductCard.vue =====
-<script setup>
-import { useCartStore } from '../stores/cartStore'
+import { 
+  UtensilsCrossed, Coffee, CupSoda, Cookie, Pill, Sparkles,
+  Candy, Snowflake, Soup, Heart, Wrench, Package, Flame, Cigarette
+} from 'lucide-vue-next'
 
 const props = defineProps({
-  product: {
-    type: Object,
-    required: true
-  }
+  categories: Array,
+  selectedCategory: String
 })
+const emit = defineEmits(['select'])
 
-const cartStore = useCartStore()
+const iconComponents = {
+  UtensilsCrossed, Coffee, CupSoda, Cookie, Pill, Sparkles,
+  Candy, Snowflake, Soup, Heart, Wrench, Package, Flame, Cigarette
+}
+
+function selectCat(name) {
+  emit('select', name)
+}
 </script>
 
 <template>
-  <div class="border rounded-xl p-3 bg-white shadow-sm flex flex-col justify-between">
-    <div>
-      <div class="w-full h-32 bg-gray-100 rounded-lg overflow-hidden mb-2">
-        <img 
-          :src="product.imageUrl" 
-          :alt="product.name" 
-          class="w-full h-full object-cover"
-          @error="(e) => e.target.src = 'https://placehold.co/300x300?text=Sinar+Pagi'"
-        />
-      </div>
-      <span class="text-xs text-emerald-600 font-semibold uppercase">{{ product.category }}</span>
-      <h3 class="font-bold text-sm text-gray-800 line-clamp-2 leading-tight">{{ product.name }}</h3>
-    </div>
-
-    <div class="mt-3 flex items-center justify-between">
-      <div>
-        <p class="text-xs text-gray-400">Rp {{ product.price.toLocaleString('id-ID') }} / {{ product.unit }}</p>
-        <p class="text-xs font-semibold text-gray-500">Stok: {{ product.stock }}</p>
-      </div>
+  <section>
+    <h2 class="text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">
+      Kategori ({{ categories.length }} Kategori Real)
+    </h2>
+    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
       <button 
-        @click="cartStore.addItem(product)"
-        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+        @click="selectCat('SEMUA')"
+        :class="['text-xs font-medium px-4 py-2 rounded-full shrink-0 transition flex items-center gap-1.5', selectedCategory === 'SEMUA' ? 'bg-emerald-600 text-white' : 'bg-white border text-slate-700']"
       >
-        + Beli
+        <Package :size="14" /> Semua ({{ categories.reduce((a,c)=>a+c.count,0) }})
+      </button>
+
+      <button 
+        v-for="cat in categories" 
+        :key="cat.id"
+        @click="selectCat(cat.name)"
+        :class="['text-xs font-medium px-3 py-2 rounded-full shrink-0 transition flex items-center gap-1.5', selectedCategory === cat.name ? 'bg-emerald-600 text-white shadow' : 'bg-white border text-slate-700']"
+      >
+        <component :is="iconComponents[cat.icon] || Package" :size="14" />
+        {{ cat.name }} ({{ cat.count }})
       </button>
     </div>
-  </div>
+  </section>
 </template>
 
 ===== src/components/CartDrawer.vue =====
@@ -243,102 +138,49 @@ function handleCheckout() {
   </div>
 </template>
 
-===== src/main.js =====
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import './style.css'
-import App from './App.vue'
+===== src/components/ProductCard.vue =====
+<script setup>
+import { useCartStore } from '../stores/cartStore'
 
-const app = createApp(App)
-app.use(createPinia())
-app.mount('#app')
-
-===== src/style.css =====
-@import "tailwindcss";
-===== src/db/index.js =====
-import Dexie from 'dexie'
-
-export const db = new Dexie('SinarPagiCatalogDB')
-
-db.version(1).stores({
-  products: 'id, name, category, price_sell, qty',
-  categories: 'id, name'
+const props = defineProps({
+  product: {
+    type: Object,
+    required: true
+  }
 })
 
-===== src/services/productService.js =====
-import { db } from '../db/index'
+const cartStore = useCartStore()
+</script>
 
-export const productService = {
-  // Mapping dari format POS ke format Katalog App
-  transformPOSProduct(rawProduct) {
-    return {
-      id: rawProduct.id,
-      name: rawProduct.name,
-      category: rawProduct.category || 'UMUM',
-      price: rawProduct.price_sell || 0,
-      unit: rawProduct.unit || 'PCS',
-      stock: rawProduct.qty || 0,
-      isAvailable: (rawProduct.qty > 0) && (rawProduct.price_sell > 0),
-      // Contoh generator URL Cloudinary berbasis nama/ID produk
-      imageUrl: rawProduct.imageUrl || `https://res.cloudinary.com/warung-sinar-pagi/image/upload/v1/products/${rawProduct.id}.jpg`
-    }
-  },
+<template>
+  <div class="border rounded-xl p-3 bg-white shadow-sm flex flex-col justify-between">
+    <div>
+      <div class="w-full h-32 bg-gray-100 rounded-lg overflow-hidden mb-2">
+        <img 
+          :src="product.imageUrl" 
+          :alt="product.name" 
+          class="w-full h-full object-cover"
+          @error="(e) => e.target.src = 'https://placehold.co/300x300?text=Sinar+Pagi'"
+        />
+      </div>
+      <span class="text-xs text-emerald-600 font-semibold uppercase">{{ product.category }}</span>
+      <h3 class="font-bold text-sm text-gray-800 line-clamp-2 leading-tight">{{ product.name }}</h3>
+    </div>
 
-  // Seed data awal dari JSON POS ke IndexedDB
-  async initProductsFromJSON(rawJSONData) {
-    const productsCount = await db.products.count()
-    if (productsCount === 0 && rawJSONData?.products) {
-      const transformedProducts = rawJSONData.products.map(this.transformPOSProduct)
-      await db.products.bulkAdd(transformedProducts)
-      
-      if (rawJSONData?.categories) {
-        await db.categories.bulkAdd(rawJSONData.categories)
-      }
-    }
-  },
-
-  async getAllProducts() {
-    return await db.products.toArray()
-  },
-
-  async getCategories() {
-    return await db.categories.toArray()
-  }
-}
-
-===== src/services/whatsappService.js =====
-export const whatsappService = {
-  formatOrderMessage(cartItems, customerInfo = {}) {
-    const { name = 'Anak Kost', room = '-' } = customerInfo
-    
-    let text = `*PESANAN BARU - WARUNG SINAR PAGI*\n`
-    text += `-----------------------------------\n`
-    text += `*Pemesan:* ${name}\n`
-    text += `*No. Kost/Kamar:* ${room}\n\n`
-    text += `*Rincian Belanjaan:*\n`
-
-    let total = 0
-    cartItems.forEach((item, index) => {
-      const subtotal = item.price * item.quantity
-      total += subtotal
-      text += `${index + 1}. ${item.name} (${item.quantity} ${item.unit}) = Rp ${subtotal.toLocaleString('id-ID')}\n`
-      if (item.selectedVariant) {
-        text += `   _Catatan: ${item.selectedVariant}_\n`
-      }
-    })
-
-    text += `\n-----------------------------------\n`
-    text += `*TOTAL BAYAR:* Rp ${total.toLocaleString('id-ID')}\n\n`
-    text += `Mohon konfirmasi pesanan dan info nomor QRIS / COD ya A/Teteh. Terima kasih!`
-
-    return encodeURIComponent(text)
-  },
-
-  generateWhatsAppURL(phoneNumber, formattedMessage) {
-    const cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
-    return `https://wa.me/${cleanPhone}?text=${formattedMessage}`
-  }
-}
+    <div class="mt-3 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-gray-400">Rp {{ product.price.toLocaleString('id-ID') }} / {{ product.unit }}</p>
+        <p class="text-xs font-semibold text-gray-500">Stok: {{ product.stock }}</p>
+      </div>
+      <button 
+        @click="cartStore.addItem(product)"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+      >
+        + Beli
+      </button>
+    </div>
+  </div>
+</template>
 
 ===== src/stores/catalogStore.js =====
 import { defineStore } from 'pinia'
@@ -352,47 +194,32 @@ export const useCatalogStore = defineStore('catalog', () => {
   const searchQuery = ref('')
   const isLoading = ref(false)
 
-  // Fetch data dari Dexie.js / IndexedDB
   async function fetchCatalog() {
     isLoading.value = true
     try {
       products.value = await productService.getAllProducts()
       categories.value = await productService.getCategories()
-    } catch (error) {
-      console.error('Gagal mengambil data katalog:', error)
+      // Sort kategori by jumlah produk terbanyak
+      categories.value.sort((a,b) => b.count - a.count)
+    } catch (e) {
+      console.error(e)
     } finally {
       isLoading.value = false
     }
   }
 
-  // Filter gabungan berdasarkan pencarian teks dan kategori
   const filteredProducts = computed(() => {
-    return products.value.filter(product => {
-      const matchCategory = selectedCategory.value === 'SEMUA' || product.category === selectedCategory.value
-      const matchSearch = product.name.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
-      return matchCategory && matchSearch && product.isAvailable
+    return products.value.filter(p => {
+      const matchCat = selectedCategory.value === 'SEMUA' || p.category === selectedCategory.value
+      const matchSearch = p.name.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
+      return matchCat && matchSearch && p.isAvailable
     })
   })
 
-  function setCategory(categoryName) {
-    selectedCategory.value = categoryName
-  }
+  function setCategory(name) { selectedCategory.value = name }
+  function setSearchQuery(q) { searchQuery.value = q }
 
-  function setSearchQuery(query) {
-    searchQuery.value = query
-  }
-
-  return {
-    products,
-    categories,
-    selectedCategory,
-    searchQuery,
-    isLoading,
-    filteredProducts,
-    fetchCatalog,
-    setCategory,
-    setSearchQuery
-  }
+  return { products, categories, selectedCategory, searchQuery, isLoading, filteredProducts, fetchCatalog, setCategory, setSearchQuery }
 })
 
 ===== src/stores/cartStore.js =====
@@ -448,53 +275,26 @@ import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCatalogStore } from '../stores/catalogStore'
 import { productService } from '../services/productService'
-import initialPOSData from '../mock/sinar-pagi.json'
+import fullDB from '../mock/full-db.json' // ganti nama file kamu yang 474 produk jadi full-db.json
 
 export function useCatalog() {
   const catalogStore = useCatalogStore()
-
-  // Ambil state reaktif menggunakan storeToRefs agar reaktivitas Vue tetap terjaga
-  const { 
-    products, 
-    categories, 
-    selectedCategory, 
-    searchQuery, 
-    filteredProducts, 
-    isLoading 
-  } = storeToRefs(catalogStore)
-
-  // Ambil method/action dari store
+  const { categories, selectedCategory, searchQuery, filteredProducts, isLoading } = storeToRefs(catalogStore)
   const { setCategory, setSearchQuery, fetchCatalog } = catalogStore
 
   onMounted(async () => {
     try {
-      // 1. Seed data ke Dexie.js dari file mock sinar-pagi.json jika database lokal masih kosong
-      await productService.initProductsFromJSON(initialPOSData)
-
-      // 2. Load data dari Dexie.js ke dalam Pinia Store
+      await productService.initFromFullDB(fullDB)
       await fetchCatalog()
     } catch (err) {
       console.error('Gagal memuat katalog:', err)
     }
   })
 
-  return {
-    // State Reaktif
-    products,
-    categories,
-    selectedCategory,
-    searchQuery,
-    filteredProducts,
-    isLoading,
-
-    // Actions
-    setCategory,
-    setSearchQuery,
-    fetchCatalog
-  }
+  return { categories, selectedCategory, searchQuery, filteredProducts, isLoading, setCategory, setSearchQuery, fetchCatalog }
 }
 
-===== src/mock/sinar-pagi.json =====
+===== src/mock/full-db.json =====
 {
   "categories": [
     { "id": "MINUMAN SACHET", "name": "MINUMAN SACHET" },
@@ -528,4 +328,212 @@ export function useCatalog() {
     }
   ]
 }
+
+===== src/services/productService.js =====
+import { db } from '../db/index'
+
+// Mapping kategori database real -> icon Lucide (21 kategori)
+export const CATEGORY_ICON_MAP = {
+  "POP MIE": "UtensilsCrossed",
+  "MIE": "UtensilsCrossed",
+  "MIE GELAS": "CupSoda",
+  "MIE GAUL": "Flame",
+  "MINUMAN SACHET": "Coffee",
+  "MINUMAN BOTOL": "CupSoda",
+  "MINUMAN CUP": "CupSoda",
+  "POP ICE": "Snowflake",
+  "ES CEKEK": "Snowflake",
+  "SNACK 1K": "Cookie",
+  "SNACK 2K": "Cookie",
+  "SNACK GOPE": "Cookie",
+  "PERMEN": "Candy",
+  "HOME CARE": "Sparkles",
+  "PERSONAL CARE": "Heart",
+  "BUMBU": "Soup",
+  "ROKOK": "Cigarette",
+  "OBAT": "Pill",
+  "PEMBALUT": "Heart",
+  "BARTIP": "Wrench",
+  "UMUM": "Package"
+}
+
+export const productService = {
+  transformPOSProduct(rawProduct, allServices = []) {
+    const activeServices = allServices.filter(s => !s.deleted)
+    
+    // Cari service yang relevan dengan kategori produk
+    const availableServices = activeServices.filter(s => {
+      return s.category === rawProduct.category || 
+             (rawProduct.category.includes('MIE') && s.category.includes('MIE')) ||
+             (rawProduct.category === 'POP ICE' && s.name.includes('Pop Ice')) ||
+             (rawProduct.category.includes('MINUMAN') && s.category === 'MINUMAN SACHET')
+    })
+
+    return {
+      id: rawProduct.id,
+      name: rawProduct.name,
+      code: rawProduct.code || '',
+      category: rawProduct.category || 'UMUM',
+      categoryIcon: CATEGORY_ICON_MAP[rawProduct.category] || 'Package',
+      price: rawProduct.price_sell || 0,
+      unit: rawProduct.unit || 'PCS',
+      stock: rawProduct.qty || 0,
+      minStock: rawProduct.minStock || 2,
+      isLowStock: (rawProduct.qty || 0) <= (rawProduct.minStock || 2) && (rawProduct.qty || 0) > 0,
+      isAvailable: (rawProduct.qty || 0) > 0,
+      availableServices,
+      // Placeholder dulu, nanti ganti ke Cloudinary kalau sudah ada foto
+      imageUrl: `https://placehold.co/300x300/e2e8f0/475569?text=${encodeURIComponent(rawProduct.name.substring(0,12))}`,
+      // Untuk nanti Cloudinary tinggal ganti baris di atas jadi:
+      // imageUrl: `https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/f_auto,q_auto,w_300/v1/products/${rawProduct.id}.jpg`,
+      updatedAt: rawProduct.updatedAt
+    }
+  },
+
+  async initFromFullDB(fullDB) {
+    const count = await db.products.count()
+    if (count > 0) return // sudah ada
+
+    const activeServices = (fullDB.services || []).filter(s => !s.deleted)
+    await db.services.bulkAdd(activeServices)
+
+    const transformed = (fullDB.products || []).map(p => this.transformPOSProduct(p, activeServices))
+    await db.products.bulkAdd(transformed)
+
+    // Build 21 kategori real dari database
+    const catMap = {}
+    transformed.forEach(p => {
+      if (!catMap[p.category]) {
+        catMap[p.category] = {
+          id: p.category,
+          name: p.category,
+          icon: p.categoryIcon,
+          count: 0
+        }
+      }
+      catMap[p.category].count++
+    })
+    await db.categories.bulkAdd(Object.values(catMap))
+
+    if (fullDB.settings?.[0]) {
+      await db.settings.put({ id: 'app_config', ...fullDB.settings[0] })
+    }
+  },
+
+  async getAllProducts() { return await db.products.toArray() },
+  async getCategories() { return await db.categories.toArray() },
+  async getSettings() { return await db.settings.get('app_config') }
+}
+
+===== src/services/whatsappService.js =====
+export const whatsappService = {
+  formatOrderMessage(cartItems, customerInfo = {}) {
+    const { name = 'Anak Kost', room = '-' } = customerInfo
+    
+    let text = `*PESANAN BARU - WARUNG SINAR PAGI*\n`
+    text += `-----------------------------------\n`
+    text += `*Pemesan:* ${name}\n`
+    text += `*No. Kost/Kamar:* ${room}\n\n`
+    text += `*Rincian Belanjaan:*\n`
+
+    let total = 0
+    cartItems.forEach((item, index) => {
+      const subtotal = item.price * item.quantity
+      total += subtotal
+      text += `${index + 1}. ${item.name} (${item.quantity} ${item.unit}) = Rp ${subtotal.toLocaleString('id-ID')}\n`
+      if (item.selectedVariant) {
+        text += `   _Catatan: ${item.selectedVariant}_\n`
+      }
+    })
+
+    text += `\n-----------------------------------\n`
+    text += `*TOTAL BAYAR:* Rp ${total.toLocaleString('id-ID')}\n\n`
+    text += `Mohon konfirmasi pesanan dan info nomor QRIS / COD ya A/Teteh. Terima kasih!`
+
+    return encodeURIComponent(text)
+  },
+
+  generateWhatsAppURL(phoneNumber, formattedMessage) {
+    const cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
+    return `https://wa.me/${cleanPhone}?text=${formattedMessage}`
+  }
+}
+
+===== src/style.css =====
+@import "tailwindcss";
+===== src/db/index.js =====
+import Dexie from 'dexie'
+
+export const db = new Dexie('SinarPagiCatalogDB')
+
+// v2: sesuai database real 474 produk
+db.version(1).stores({
+  products: 'id, name, category, price, stock, isAvailable, minStock, updatedAt',
+  categories: 'id, name, count',
+  services: 'id, name, category, price',
+  settings: 'id'
+})
+===== src/main.js =====
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import './style.css'
+import App from './App.vue'
+
+const app = createApp(App)
+app.use(createPinia())
+app.mount('#app')
+
+===== src/App.vue =====
+<script setup>
+import { ShoppingBag, Flame, Search } from 'lucide-vue-next'
+import { useCatalog } from './composables/useCatalog'
+import ProductCard from './components/ProductCard.vue'
+import CategoryFilter from './components/CategoryFilter.vue'
+import CartDrawer from './components/CartDrawer.vue'
+
+const { categories, selectedCategory, searchQuery, filteredProducts, isLoading, setCategory } = useCatalog()
+</script>
+
+<template>
+  <div class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24">
+    <header class="sticky top-0 z-10 bg-emerald-600 text-white shadow-md p-4">
+      <div class="max-w-md mx-auto flex justify-between items-center">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Warung Sinar Pagi</h1>
+          <p class="text-xs text-emerald-100">Ciheuleut - 474 Produk Real</p>
+        </div>
+        <div class="bg-emerald-700 p-2 rounded-full">
+          <ShoppingBag :size="20" />
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 space-y-5">
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex gap-3">
+        <Flame class="text-amber-500 shrink-0" :size="20" />
+        <div class="text-sm text-amber-900">
+          <p class="font-semibold">Kategori Sesuai Database Real!</p>
+          <p class="text-xs text-amber-700 mt-0.5">Sekarang 21 kategori sesuai POS, bukan 3 lagi.</p>
+        </div>
+      </div>
+
+      <div class="relative">
+        <Search class="absolute left-3 top-2.5 text-slate-400" :size="18" />
+        <input v-model="searchQuery" placeholder="Cari 474 produk..." class="w-full bg-white border rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none" />
+      </div>
+
+      <CategoryFilter :categories="categories" :selectedCategory="selectedCategory" @select="setCategory" />
+
+      <section>
+        <div v-if="isLoading" class="text-center py-10 text-slate-400 text-sm">Memuat 474 produk...</div>
+        <div v-else-if="filteredProducts.length === 0" class="text-center py-10 text-slate-400 text-sm">Produk tidak ditemukan.</div>
+        <div v-else class="grid grid-cols-2 gap-3">
+          <ProductCard v-for="product in filteredProducts" :key="product.id" :product="product" />
+        </div>
+      </section>
+    </main>
+
+    <CartDrawer />
+  </div>
+</template>
 

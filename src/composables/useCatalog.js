@@ -2,48 +2,21 @@ import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCatalogStore } from '../stores/catalogStore'
 import { productService } from '../services/productService'
-import initialPOSData from '../mock/sinar-pagi.json'
+import fullDB from '../mock/full-db.json' // ganti nama file kamu yang 474 produk jadi full-db.json
 
 export function useCatalog() {
   const catalogStore = useCatalogStore()
-
-  // Ambil state reaktif menggunakan storeToRefs agar reaktivitas Vue tetap terjaga
-  const { 
-    products, 
-    categories, 
-    selectedCategory, 
-    searchQuery, 
-    filteredProducts, 
-    isLoading 
-  } = storeToRefs(catalogStore)
-
-  // Ambil method/action dari store
+  const { categories, selectedCategory, searchQuery, filteredProducts, isLoading } = storeToRefs(catalogStore)
   const { setCategory, setSearchQuery, fetchCatalog } = catalogStore
 
   onMounted(async () => {
     try {
-      // 1. Seed data ke Dexie.js dari file mock sinar-pagi.json jika database lokal masih kosong
-      await productService.initProductsFromJSON(initialPOSData)
-
-      // 2. Load data dari Dexie.js ke dalam Pinia Store
+      await productService.initFromFullDB(fullDB)
       await fetchCatalog()
     } catch (err) {
       console.error('Gagal memuat katalog:', err)
     }
   })
 
-  return {
-    // State Reaktif
-    products,
-    categories,
-    selectedCategory,
-    searchQuery,
-    filteredProducts,
-    isLoading,
-
-    // Actions
-    setCategory,
-    setSearchQuery,
-    fetchCatalog
-  }
+  return { categories, selectedCategory, searchQuery, filteredProducts, isLoading, setCategory, setSearchQuery, fetchCatalog }
 }
