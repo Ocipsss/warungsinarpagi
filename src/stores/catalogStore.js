@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { productService } from '../services/productService'
+import { productService } from '../services/product/service.js'
 
 export const useCatalogStore = defineStore('catalog', () => {
   const products = ref([])
@@ -15,23 +15,23 @@ export const useCatalogStore = defineStore('catalog', () => {
       products.value = await productService.getAllProducts()
       categories.value = await productService.getCategories()
       categories.value.sort((a,b) => (b.count||0) - (a.count||0))
-    } catch (e) {
-      console.error(e)
     } finally {
       isLoading.value = false
     }
   }
 
   const filteredProducts = computed(() => {
+    const q = searchQuery.value.toLowerCase().trim()
     return products.value.filter(p => {
       const matchCat = selectedCategory.value === 'SEMUA' || p.category === selectedCategory.value
-      const matchSearch = p.name.toLowerCase().includes(searchQuery.value.toLowerCase().trim())
+      const matchSearch = !q || p.name.toLowerCase().includes(q)
       return matchCat && matchSearch && p.isAvailable
     })
   })
 
-  function setCategory(name) { selectedCategory.value = name }
-  function setSearchQuery(q) { searchQuery.value = q }
+  const totalCount = computed(() => categories.value.reduce((a,c) => a + (c.count||0), 0))
 
-  return { products, categories, selectedCategory, searchQuery, isLoading, filteredProducts, fetchCatalog, setCategory, setSearchQuery }
+  function setCategory(name) { selectedCategory.value = name }
+
+  return { products, categories, selectedCategory, searchQuery, isLoading, filteredProducts, totalCount, fetchCatalog, setCategory }
 })

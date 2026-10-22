@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useCartStore } from '../stores/cartStore'
+import { useCartStore } from '../../stores/cartStore'
 import { ShoppingBag, MapPin, QrCode, Banknote, FileText, User } from 'lucide-vue-next'
 
 const cartStore = useCartStore()

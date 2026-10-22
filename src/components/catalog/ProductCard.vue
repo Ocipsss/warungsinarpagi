@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { useCartStore } from '../stores/cartStore'
+import { useCartStore } from '../../stores/cartStore'
 
 const props = defineProps({
   product: { type: Object, required: true }
